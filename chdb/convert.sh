@@ -1,17 +1,19 @@
 #!/bin/bash
 
-PROVIDER="${PROVIDER:-free_runner}"
+PROVIDER="${PROVIDER:-github}"
 MACHINE="${MACHINE:-2cpu7gb}"
 
 RESULTS=$(cat log.txt | grep -P '^\d|Killed|Segmentation' | sed -r -e 's/^.*(Killed|Segmentation).*$/null\nnull\nnull/' |     awk '{ if (i % 3 == 0) { printf "[" }; printf $1; if (i % 3 != 2) { printf "," } else { print "]," }; ++i; }') # >> results.json
 
 mkdir -p results
 
+VERSION=$(python -m chdb "SELECT version()")
+
 echo '
 {
-    "system": "Github Actions ('$PROVIDER')",
+    "system": "chdb '$(echo $VERSION)'",
     "date": "'$(date +%F)'",
-    "machine": "'$MACHINE'",
+    "machine": "'$PROVIDER-$MACHINE'",
     "cluster_size": "serverless",
     "comment": "",
 
