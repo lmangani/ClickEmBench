@@ -13,10 +13,10 @@ echo '{
     "system": "chdb",
     "date": "'$(date +%F)'",
     "machine": "'$PROVIDER $MACHINE'",
-    "cluster_size": "1",
+    "cluster_size": "serverless",
     "comment": "'$VERSION'",
     "tags": ["C++", "column-oriented", "ClickHouse derivative", "embedded", "github"],
-    "load_time": "0",
+    "load_time": 0,
     "data_size": '$(find . -type f -name "*.parquet" -print0 | xargs -0r du -cb | tail -n1 | awk '{print $1}')',
     "result": [
       '$(echo $RESULTS | head -c-2)'
