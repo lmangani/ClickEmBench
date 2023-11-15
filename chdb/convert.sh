@@ -7,7 +7,7 @@ RESULTS=$(cat log.txt | grep -P '^\d|Killed|Segmentation' | sed -r -e 's/^.*(Kil
 
 mkdir -p results
 
-VERSION=$(python -m chdb "SELECT version()")
+VERSION=$(python -m chdb "SELECT version()" | tr -d '"')
 
 echo '
 {
