@@ -11,7 +11,7 @@ VERSION=$(python -m chdb "SELECT version()" | tr -d '"')
 
 echo '
 {
-    "system": "chdb '$(echo $VERSION)'",
+    "system": "chdb ('$(echo $VERSION)')",
     "date": "'$(date +%F)'",
     "machine": "'$PROVIDER-$MACHINE'",
     "cluster_size": "serverless",
