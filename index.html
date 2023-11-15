@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ClickBench — a Benchmark For Analytical DBMS</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="icon" href="data:image/gif;base64,R0lGODlhIAAgAOMPAHMUEmkyHOcbF8UvJts/E3BeOih1YziiQmebLt2AFjeyQKqZKNWPjLybfPfcDP///yH5BAEKAA8ALAAAAAAgACAAAATg8MlJ6ws26z0EGcQmZgAhnN6oPg0wDA0zrGMTAADDxEJCZ4Gba8c4hX4Uw+XWeYGOyMdhgkuYrAToqIBQHBCIKQ6wcJhPyINarUBcyuYE+ndQeOsKuNlxmv3CdnZfew5yAlEPC12BhFhZiBJ2CI1GkBMHeoV9PpYPhIUDBqIFnZ8EBaKplqYMqaqIewl8A6iupFF7C1YCoaJqq4UOWQIBBmtTuIQmWWxekJQeYWuWcFYPfl+dLAELOxML2hIYDeEWt7flEufknTZB7+8NBeyINxjqDwU4QYg26BTu6KVTEQEAOw==">
+    <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --color: black;
+            --title-color: black;
+            --background-color: white;
+
+            --link-color: #08F;
+            --link-hover-color: #F40;
+
+            --selector-text-color: black;
+            --selector-active-text-color: black;
+            --selector-background-color: #EEE;
+            --selector-active-background-color: #FFCB80;
+            --selector-hover-text-color: black;
+            --selector-hover-background-color: #FDB;
+
+            --summary-every-other-row-color: #F8F8F8;
+            --highlight-color: #EEE;
+            --bar-color: #FFCB80;
+
+            --tooltip-text-color: white;
+            --tooltip-background-color: black;
+
+            --nothing-selected-color: #CCC;
+            --shadow-color: grey;
+        }
+
+        [data-theme="dark"] {
+            --color: #CCC;
+            --title-color: white;
+            --background-color: #04293A;
+
+            --link-color: #8CF;
+            --link-hover-color: #FFF;
+
+            --selector-text-color: white;
+            --selector-background-color: #444;
+            --selector-active-text-color: white;
+            --selector-active-background-color: #088;
+            --selector-hover-text-color: black;
+            --selector-hover-background-color: white;
+
+            --summary-every-other-row-color: #042e41;
+            --highlight-color: #064663;
+            --bar-color: #088;
+
+            --tooltip-text-color: white;
+            --tooltip-background-color: #444;
+
+            --nothing-selected-color: #666;
+            --shadow-color: black;
+        }
+
+        html, body {
+            color: var(--color);
+            background-color: var(--background-color);
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            overflow: auto;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            padding: 1% 3% 0 3%;
+        }
+
+        h1 {
+            color: var(--title-color);
+        }
+
+        table {
+             border-spacing: 1px;
+        }
+
+        .stick-left {
+            position: sticky;
+            left: 0px;
+        }
+
+        .selectors-container {
+            padding: 2rem 0 2rem 0;
+            user-select: none;
+        }
+
+        .selectors-container th {
+            text-align: left;
+            vertical-align: top;
+            white-space: nowrap;
+            padding-top: 0.5rem;
+            padding-right: 1rem;
+        }
+
+        .selector {
+            display: inline-block;
+            margin-left: 0.1rem;
+            padding: 0.2rem 0.5rem 0.2rem 0.5rem;
+            background: var(--selector-background-color);
+            color: var(--selector-text-color);
+            border: 0.2rem solid var(--background-color);
+            border-radius: 0.5rem;
+        }
+
+        .selector-active {
+            color: var(--selector-active-text-color);
+            background: var(--selector-active-background-color);
+        }
+
+        a, a:visited {
+            text-decoration: none;
+            color: var(--link-color);
+            cursor: pointer;
+        }
+
+        a:hover {
+            color: var(--link-hover-color);
+        }
+
+        .selector:hover {
+            color: var(--selector-hover-text-color) !important;
+            background: var(--selector-background-color);
+        }
+
+        .selector-active:hover {
+            background: var(--selector-hover-background-color);
+        }
+
+        #summary tr:nth-child(odd) {
+            background: var(--summary-every-other-row-color);
+        }
+
+        .summary-name {
+            white-space: nowrap;
+            text-align: right;
+            padding-right: 1rem;
+        }
+
+        .summary-bar-cell {
+            width: 100%;
+        }
+
+        .summary-bar {
+            height: 1rem;
+            background: var(--bar-color);
+            border-radius: 0 0.2rem 0.2rem 0;
+        }
+
+        .summary-number {
+            font-family: monospace;
+            text-align: right;
+            padding-left: 1rem;
+            white-space: nowrap;
+        }
+
+        th {
+            padding-bottom: 0.5rem;
+        }
+
+        .th-entry-hilite {
+            background: var(--highlight-color);
+            font-weight: bold;
+        }
+
+        .summary-row:hover, .summary-row-hilite {
+            background: var(--highlight-color) !important;
+            font-weight: bold;
+        }
+
+        #details {
+            padding-bottom: 1rem;
+        }
+
+        #details th {
+            vertical-align: bottom;
+            white-space: pre;
+        }
+
+        #details td {
+            white-space: pre;
+            font-family: monospace;
+            text-align: right;
+            padding: 0.1rem 0.5rem 0.1rem 0.5rem;
+        }
+
+        .shadow:hover {
+            box-shadow: 0 0 1rem var(--shadow-color);
+            position: relative;
+        }
+
+        #nothing-selected {
+            display: none;
+            font-size: 32pt;
+            font-weight: bold;
+            color: var(--nothing-selected-color);
+        }
+
+        .note {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip {
+            position: absolute;
+            bottom: calc(100% + 0.5rem);
+            visibility: hidden;
+            background-color: var(--tooltip-background-color);
+            color: var(--tooltip-text-color);
+            box-shadow: 0 0 1rem var(--shadow-color);
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.5rem;
+            z-index: 1;
+            text-align: left;
+            white-space: normal;
+        }
+
+        .tooltip-result {
+            left: calc(50% - 0.25rem);
+            width: 20rem;
+            margin-left: -10rem;
+        }
+
+        .tooltip-query {
+            left: 0;
+            width: 40rem;
+            margin-left: -3rem;
+        }
+
+        .note:hover .tooltip {
+            visibility: visible;
+        }
+
+        .tooltip::after {
+            content: " ";
+            position: absolute;
+            top: 100%;
+            border-width: 0.5rem;
+            border-style: solid;
+            border-color: var(--tooltip-background-color) transparent transparent transparent;
+        }
+
+        .tooltip-result::after {
+            left: 50%;
+            margin-left: -1rem;
+        }
+
+        .tooltip-query::after {
+            left: 3rem;
+            margin-left: 0.5rem;
+        }
+
+        .nowrap {
+            text-wrap: none;
+        }
+
+        .themes {
+            float: right;
+            font-size: 200%;
+            cursor: pointer;
+        }
+
+        #toggle-dark, #toggle-light {
+            padding-right: 0.5rem;
+            cursor: pointer;
+        }
+
+        #toggle-dark:hover, #toggle-light:hover {
+            display: inline-block;
+            transform: translate(1px, 1px);
+            filter: brightness(125%);
+        }
+    </style>
+    <script type="text/javascript">
+
+const queries = [
+"SELECT COUNT(*) FROM hits;",
+"SELECT COUNT(*) FROM hits WHERE AdvEngineID <> 0;",
+"SELECT SUM(AdvEngineID), COUNT(*), AVG(ResolutionWidth) FROM hits;",
+"SELECT AVG(UserID) FROM hits;",
+"SELECT COUNT(DISTINCT UserID) FROM hits;",
+"SELECT COUNT(DISTINCT SearchPhrase) FROM hits;",
+"SELECT MIN(EventDate), MAX(EventDate) FROM hits;",
+"SELECT AdvEngineID, COUNT(*) FROM hits WHERE AdvEngineID <> 0 GROUP BY AdvEngineID ORDER BY COUNT(*) DESC;",
+"SELECT RegionID, COUNT(DISTINCT UserID) AS u FROM hits GROUP BY RegionID ORDER BY u DESC LIMIT 10;",
+"SELECT RegionID, SUM(AdvEngineID), COUNT(*) AS c, AVG(ResolutionWidth), COUNT(DISTINCT UserID) FROM hits GROUP BY RegionID ORDER BY c DESC LIMIT 10;",
+"SELECT MobilePhoneModel, COUNT(DISTINCT UserID) AS u FROM hits WHERE MobilePhoneModel <> '' GROUP BY MobilePhoneModel ORDER BY u DESC LIMIT 10;",
+"SELECT MobilePhone, MobilePhoneModel, COUNT(DISTINCT UserID) AS u FROM hits WHERE MobilePhoneModel <> '' GROUP BY MobilePhone, MobilePhoneModel ORDER BY u DESC LIMIT 10;",
+"SELECT SearchPhrase, COUNT(*) AS c FROM hits WHERE SearchPhrase <> '' GROUP BY SearchPhrase ORDER BY c DESC LIMIT 10;",
+"SELECT SearchPhrase, COUNT(DISTINCT UserID) AS u FROM hits WHERE SearchPhrase <> '' GROUP BY SearchPhrase ORDER BY u DESC LIMIT 10;",
+"SELECT SearchEngineID, SearchPhrase, COUNT(*) AS c FROM hits WHERE SearchPhrase <> '' GROUP BY SearchEngineID, SearchPhrase ORDER BY c DESC LIMIT 10;",
+"SELECT UserID, COUNT(*) FROM hits GROUP BY UserID ORDER BY COUNT(*) DESC LIMIT 10;",
+"SELECT UserID, SearchPhrase, COUNT(*) FROM hits GROUP BY UserID, SearchPhrase ORDER BY COUNT(*) DESC LIMIT 10;",
+"SELECT UserID, SearchPhrase, COUNT(*) FROM hits GROUP BY UserID, SearchPhrase LIMIT 10;",
+"SELECT UserID, extract(minute FROM EventTime) AS m, SearchPhrase, COUNT(*) FROM hits GROUP BY UserID, m, SearchPhrase ORDER BY COUNT(*) DESC LIMIT 10;",
+"SELECT UserID FROM hits WHERE UserID = 435090932899640449;",
+"SELECT COUNT(*) FROM hits WHERE URL LIKE '%google%';",
+"SELECT SearchPhrase, MIN(URL), COUNT(*) AS c FROM hits WHERE URL LIKE '%google%' AND SearchPhrase <> '' GROUP BY SearchPhrase ORDER BY c DESC LIMIT 10;",
+"SELECT SearchPhrase, MIN(URL), MIN(Title), COUNT(*) AS c, COUNT(DISTINCT UserID) FROM hits WHERE Title LIKE '%Google%' AND URL NOT LIKE '%.google.%' AND SearchPhrase <> '' GROUP BY SearchPhrase ORDER BY c DESC LIMIT 10;",
+"SELECT * FROM hits WHERE URL LIKE '%google%' ORDER BY EventTime LIMIT 10;",
+"SELECT SearchPhrase FROM hits WHERE SearchPhrase <> '' ORDER BY EventTime LIMIT 10;",
+"SELECT SearchPhrase FROM hits WHERE SearchPhrase <> '' ORDER BY SearchPhrase LIMIT 10;",
+"SELECT SearchPhrase FROM hits WHERE SearchPhrase <> '' ORDER BY EventTime, SearchPhrase LIMIT 10;",
+"SELECT CounterID, AVG(length(URL)) AS l, COUNT(*) AS c FROM hits WHERE URL <> '' GROUP BY CounterID HAVING COUNT(*) > 100000 ORDER BY l DESC LIMIT 25;",
+"SELECT REGEXP_REPLACE(Referer, '^https?://(?:www\\.)?([^/]+)/.*$', '\\1') AS k, AVG(length(Referer)) AS l, COUNT(*) AS c, MIN(Referer) FROM hits WHERE Referer <> '' GROUP BY k HAVING COUNT(*) > 100000 ORDER BY l DESC LIMIT 25;",
+"SELECT SUM(ResolutionWidth), SUM(ResolutionWidth + 1), SUM(ResolutionWidth + 2), SUM(ResolutionWidth + 3), ..., SUM(ResolutionWidth + 89) FROM hits;",
+"SELECT SearchEngineID, ClientIP, COUNT(*) AS c, SUM(IsRefresh), AVG(ResolutionWidth) FROM hits WHERE SearchPhrase <> '' GROUP BY SearchEngineID, ClientIP ORDER BY c DESC LIMIT 10;",
+"SELECT WatchID, ClientIP, COUNT(*) AS c, SUM(IsRefresh), AVG(ResolutionWidth) FROM hits WHERE SearchPhrase <> '' GROUP BY WatchID, ClientIP ORDER BY c DESC LIMIT 10;",
+"SELECT WatchID, ClientIP, COUNT(*) AS c, SUM(IsRefresh), AVG(ResolutionWidth) FROM hits GROUP BY WatchID, ClientIP ORDER BY c DESC LIMIT 10;",
+"SELECT URL, COUNT(*) AS c FROM hits GROUP BY URL ORDER BY c DESC LIMIT 10;",
+"SELECT 1, URL, COUNT(*) AS c FROM hits GROUP BY 1, URL ORDER BY c DESC LIMIT 10;",
+"SELECT ClientIP, ClientIP - 1, ClientIP - 2, ClientIP - 3, COUNT(*) AS c FROM hits GROUP BY ClientIP, ClientIP - 1, ClientIP - 2, ClientIP - 3 ORDER BY c DESC LIMIT 10;",
+"SELECT URL, COUNT(*) AS PageViews FROM hits WHERE CounterID = 62 AND EventDate >= '2013-07-01' AND EventDate <= '2013-07-31' AND DontCountHits = 0 AND IsRefresh = 0 AND URL <> '' GROUP BY URL ORDER BY PageViews DESC LIMIT 10;",
+"SELECT Title, COUNT(*) AS PageViews FROM hits WHERE CounterID = 62 AND EventDate >= '2013-07-01' AND EventDate <= '2013-07-31' AND DontCountHits = 0 AND IsRefresh = 0 AND Title <> '' GROUP BY Title ORDER BY PageViews DESC LIMIT 10;",
+"SELECT URL, COUNT(*) AS PageViews FROM hits WHERE CounterID = 62 AND EventDate >= '2013-07-01' AND EventDate <= '2013-07-31' AND IsRefresh = 0 AND IsLink <> 0 AND IsDownload = 0 GROUP BY URL ORDER BY PageViews DESC LIMIT 10 OFFSET 1000;",
+"SELECT TraficSourceID, SearchEngineID, AdvEngineID, CASE WHEN (SearchEngineID = 0 AND AdvEngineID = 0) THEN Referer ELSE '' END AS Src, URL AS Dst, COUNT(*) AS PageViews FROM hits WHERE CounterID = 62 AND EventDate >= '2013-07-01' AND EventDate <= '2013-07-31' AND IsRefresh = 0 GROUP BY TraficSourceID, SearchEngineID, AdvEngineID, Src, Dst ORDER BY PageViews DESC LIMIT 10 OFFSET 1000;",
+"SELECT URLHash, EventDate, COUNT(*) AS PageViews FROM hits WHERE CounterID = 62 AND EventDate >= '2013-07-01' AND EventDate <= '2013-07-31' AND IsRefresh = 0 AND TraficSourceID IN (-1, 6) AND RefererHash = 3594120000172545465 GROUP BY URLHash, EventDate ORDER BY PageViews DESC LIMIT 10 OFFSET 100;",
+"SELECT WindowClientWidth, WindowClientHeight, COUNT(*) AS PageViews FROM hits WHERE CounterID = 62 AND EventDate >= '2013-07-01' AND EventDate <= '2013-07-31' AND IsRefresh = 0 AND DontCountHits = 0 AND URLHash = 2868770270353813622 GROUP BY WindowClientWidth, WindowClientHeight ORDER BY PageViews DESC LIMIT 10 OFFSET 10000;",
+"SELECT DATE_TRUNC('minute', EventTime) AS M, COUNT(*) AS PageViews FROM hits WHERE CounterID = 62 AND EventDate >= '2013-07-14' AND EventDate <= '2013-07-15' AND IsRefresh = 0 AND DontCountHits = 0 GROUP BY DATE_TRUNC('minute', EventTime) ORDER BY DATE_TRUNC('minute', EventTime) LIMIT 10 OFFSET 1000;",
+];
+
+const data = [
+{"system":"chDB","date":"2023-05-05","machine":"c6a.4xlarge, 500gb gp2","cluster_size":1,"comment":"","tags":["C++","column-oriented","ClickHouse derivative","embedded","stateless","serverless"],"load_time":0,"data_size":14779976446,"result":[[0.2142074100000002,0.06882208100000753,0.06698695899999052],[0.21433474400001273,0.05794623400001342,0.057398905000013656],[0.25145876300001646,0.09365810799999963,0.0927742330000001],[0.43362701600000264,0.09151721000000634,0.09002429299999903],[0.6274811319999856,0.45731702300000165,0.44805708699999514],[1.016439422000019,0.7270457869999802,0.7281644760000177],[0.17415907900002026,0.07338490300000444,0.07135004600002048],[0.15761252199999376,0.06434131999998272,0.06364797699998803],[0.9011239490000094,0.6279251530000067,0.6617304419999925],[1.3989778490000049,0.7784884470000009,0.7991503589999809],[0.6405131490000144,0.288082022999987,0.2907754610000097],[0.7087472860000048,0.3404617630000075,0.34405304700001693],[0.9884754980000139,0.742467481999995,0.7458478129999833],[2.446865468999988,1.077438581999985,1.0773534190000191],[1.1237870280000095,0.860952731999987,0.8733325050000076],[0.7824573620000024,0.5994026669999926,0.603801035999993],[3.0189614590000247,2.1247967310000035,2.136651298000004],[2.268133656999993,1.342204492999997,1.3375202990000048],[6.154855214999998,4.1472972940000545,4.200881827000046],[0.42060202400000435,0.09300883100002011,0.09273820700002489],[9.440000580999993,1.2985261019999825,1.3186195140000336],[11.130420060999995,1.750144492000004,1.7870355000000018],[21.657440298999973,4.191915921000032,4.128165265999996],[55.73274844499997,16.125229505999982,15.999065228999996],[2.6613450219999777,0.5245296020000296,0.44928111000001536],[0.8606326020000097,0.41947248600001785,0.42714392499999576],[2.6127060599999936,0.4240091479999819,0.4173263879999922],[9.625697985999977,1.537415798999973,1.5635347990000241],[10.62851167499997,10.254705237999985,10.246708373000047],[1.3997938080000267,1.2829287249999766,1.3373195980000219],[2.629494959999988,0.8007238929999971,0.8009190960000296],[6.257382670000027,1.0821710089999783,1.0986213179999709],[7.894820188999972,5.682761884999991,5.684027975000049],[10.944004618000008,4.332272504000002,4.397889952000014],[10.888015042000006,4.304654096000036,4.363871365000023],[1.245383650000008,0.9663471250000839,0.9393379179999783],[10.02239869799996,1.5317859549999184,1.6102954730000647],[9.042795040000101,1.4587223329999688,1.4796740619999582],[9.98100896599999,1.5930554510000547,1.5763176469999962],[18.767428479000046,3.416737495999996,3.394079593000015],[2.949028655999996,0.3381267659999594,0.3303272449999213],[2.2183266100000765,0.2911085360000243,0.28956761999995706],[1.3416713980000168,0.31786464999993314,0.25272847500002626]],"source":"chdb/results/c6a.4xlarge.json"}
+,{"system":"chDB","date":"2023-05-05","machine":"c6a.metal, 500gb gp2","cluster_size":1,"comment":"","tags":["C++","column-oriented","ClickHouse derivative","embedded","stateless","serverless"],"load_time":0,"data_size":14779976446,"result":[[0.25085395600000027,0.13717639500001155,0.10192336299999738],[0.19351914300000317,0.23702443199998413,0.23030831299999477],[0.38653160600000547,0.10727562700000703,0.1079391199999975],[0.5821646519999888,0.11063486399999078,0.10717972199998371],[1.554399705999998,1.2151783790000081,1.2112660370000015],[2.035837005000019,1.4492607999999905,1.3240938330000063],[0.21244647899999336,0.22758840500000588,0.09454707199998325],[0.37854534199999534,0.0806291579999936,0.07829879499999493],[0.8155532019999896,0.407321249000006,0.381915843999991],[1.5566488579999884,0.47072470199998406,0.4231783470000039],[0.7227343300000086,0.2129163369999958,0.2129321280000056],[0.6888460250000037,0.22112879700000576,0.2325982460000091],[0.979024948000017,0.3725961359999985,0.3622014049999791],[2.2554182020000155,0.45391694599999255,0.44524926799999776],[0.9685399139999902,0.41066436499997394,0.39307313000000477],[0.5552744130000065,0.3293312250000042,0.32380252500001916],[2.5407928539999887,0.8057684110000025,0.8117435089999958],[2.480627472000009,0.717416046000011,0.7006543530000044],[4.715823697000019,1.428862315999993,1.3309564099999989],[0.4274330179999879,0.08513459599998896,0.07622262399999613],[9.466044803999978,0.42960786800000506,0.4351132179999979],[11.144097670000008,0.655176608000005,0.5562489730000095],[21.659016025,0.8626887380000028,0.8547264640000094],[55.93614273,5.38185286800001,4.2953555569999935],[2.6935396330000003,0.23816812000001164,0.22127673400001413],[0.8375048199999924,0.20675362399998676,0.20651609999998755],[2.677874332999977,0.18914798399998745,0.19894682300002842],[9.629668981999998,0.5783150890000002,0.5699679560000277],[8.665696378000007,2.074512052999978,2.170078869000008],[1.0702536989999771,0.7750411739999663,0.7929929419999553],[2.597370228999978,0.42321389300002465,0.40198629100001426],[6.139428893999991,0.5609760049999863,0.5218740169999592],[5.420712613999967,1.790675226000019,1.8716358959999866],[10.126479325000048,1.5676798349999785,1.2933676730000343],[10.00519733799996,1.298088000000007,1.408291107000025],[0.7715717759999734,0.45679534399999966,0.38578160100001924],[10.047253146999992,0.46224451500000896,0.5013313469999616],[9.027152569999998,0.4774934599999483,0.45599200899999914],[10.028154845000017,0.48999347899996337,0.5015574689999767],[18.814411635,0.8736013170000092,0.6722256219999849],[3.0613838720000217,0.1627915900000403,0.1635108240000136],[2.376407903000029,0.15505116399998542,0.14369173599999385],[1.335110277999945,0.20318408099996077,0.12870271500003128]],"source":"chdb/results/c6a.metal.json"}
+,{"system":"DuckDB","date":"2023-09-26","machine":"c5.4xlarge, 500gb gp2","cluster_size":1,"tags":["C++","column-oriented","embedded"],"load_time":584,"data_size":25332035584,"result":[[0.026924091999717348,0.003037471999959962,0.0030087130003266793],[0.16772413799981223,0.012932972999806225,0.012755570000081207],[1.2386933419998059,0.03195383900037996,0.03169731600019077],[1.193935569000132,0.05566495500033852,0.055519788000310655],[1.2719721720000052,0.4797815800002354,0.47364618500023425],[1.7204052460001549,0.5739197209995837,0.6044714929998918],[0.13692102499999237,0.016513684000074136,0.016418880999935936],[0.42878113500000836,0.013978246000078798,0.01376930500009621],[2.144393795000269,0.5794733759998962,0.5795776770000884],[2.8978004400000827,0.7554636660001961,0.7576688170001944],[1.4596238879998964,0.18253447699999015,0.18234920899976714],[2.0671171230001164,0.20573082399960185,0.20432037900036448],[2.0727818139998817,0.49253306799982965,0.5038160149997566],[3.3520127649999267,0.8635853699997824,0.8859385079999811],[2.076823574000173,0.5337086039999122,0.5591845710000598],[0.6800219409997226,0.5261602820000917,0.5328403540002],[3.3403330400001323,1.2221616189999622,1.2723400309996578],[3.3052175400002852,1.2275647739998021,1.2696754610001335],[6.236794336999992,2.1919357929996295,2.266641716000322],[0.34883063199958997,0.038191365000329824,0.03821421199972974],[20.648422884999945,0.8656416110002283,0.8617157950002365],[22.367165485999976,0.6310706739996021,0.6244764059997578],[38.236362885999824,0.9444063159999132,0.9462657369999761],[95.79474400300023,4.57907104800006,4.498353044000396],[4.15015750900011,0.1932854189999489,0.18837451800027338],[1.9394079560001956,0.19987759199966604,0.19433718700020108],[4.543052850000095,0.20305141100016044,0.19478781699990577],[20.80425411499982,0.5468405399997209,0.5366565440003797],[14.24943101000008,4.494378264999796,4.4872481480001625],[0.7351944990000447,0.6778340149999167,0.6781058520000443],[4.485817211999802,0.4642300189998423,0.472603571000036],[7.575815559000148,0.6107541849996778,0.629833944999973],[7.22739360200012,4.044819612000083,4.163989215000129],[20.450376160999895,2.465135957000257,2.461840141999801],[20.466968382999767,2.605108253999788,2.608107234000272],[0.8528685460000816,0.6727260970001225,0.6969227390000015],[0.11805038800002876,0.03027148999990459,0.0272187630002918],[0.07883884800003216,0.015259446000072785,0.012236310999924171],[0.09153883999988466,0.017189998000048945,0.013864642000044114],[0.1759261150000384,0.06460375899996507,0.06465984499982369],[0.09337568199998714,0.00883036599998377,0.007896293999692716],[0.08930611300002056,0.008033808000163845,0.007339697000134038],[0.06956559599984757,0.009394902000167349,0.009093027000290022]],"source":"duckdb/results/c5.4xlarge.json"}
+,{"system":"DuckDB","date":"2023-09-26","machine":"c6a.4xlarge, 500gb gp2","cluster_size":1,"tags":["C++","column-oriented","embedded"],"load_time":557,"data_size":25409892352,"result":[[0.028086780999728944,0.002414253000097233,0.0021636960000250838],[0.46563523099985105,0.010625985999922705,0.01016174400001546],[0.8891034559997024,0.025961164999898756,0.025551394000103755],[1.2264355699999214,0.03623923299983289,0.036103159000049345],[1.2716879180002252,0.3992600950000451,0.39979254900026717],[1.7464284959996803,0.476917694000349,0.4876424449998922],[0.3640209790000881,0.014415404999908787,0.013864879999800905],[0.4231801880000603,0.011493789000269317,0.011028166999949462],[1.9182373680000637,0.4695572649998212,0.473022095000033],[2.8863619510002536,0.6202132429998528,0.6272343959999489],[1.469674029000089,0.15033233000031032,0.1493539050002255],[2.122888372000034,0.16747449600006803,0.16623175400036416],[2.19689435600003,0.41368822100002944,0.4245434929998737],[3.353093207999791,0.7176920880001489,0.7419013379999342],[2.106729788999928,0.45157940500030236,0.45956111399982547],[0.7618140450003921,0.44360254799994436,0.4438193040000442],[3.3160554369997044,1.0091327439999986,1.0501606820002962],[3.2899087420000797,0.9937532539997846,1.0319792189998225],[6.147077066000293,1.8601839829998426,1.7930358930002512],[0.5478519510002116,0.029630810000071506,0.029407205000097747],[20.476412891999644,0.7287512409998271,0.7185980860003838],[22.457170643000154,0.5557742740002141,0.5497367680000025],[38.57942790900006,0.7984957059998123,0.7973248660000536],[96.20789085900014,3.8985825760000807,3.8594193190001533],[4.189989236000201,0.16466093799999726,0.1578326910002943],[2.0615221919997566,0.16868170299994745,0.1622597460000179],[4.6220101120002255,0.17378973800032327,0.1636861649999446],[20.925809684999876,0.4753908990001037,0.46921747900023547],[14.220432916999926,3.337972157999957,3.3373912329998348],[0.584624170999632,0.4804462130000502,0.4832376250001289],[4.546239200999935,0.39545450399964466,0.3945328300001165],[7.614473170999645,0.5206363369998144,0.5212976839998191],[6.800434293000308,3.344280624000021,3.4436193860001367],[20.560247130000334,2.172507063000012,2.1904886800002714],[20.578359694000028,2.2406041530002767,2.3070416179998574],[0.7716577450000841,0.5659581239997351,0.5712790600000517],[0.15594478200000594,0.02518773699966914,0.023627209000096627],[0.10974644699990677,0.012240085000030376,0.01144400700013648],[0.12063824999995632,0.01217633400028717,0.01063554699976521],[0.24521544600020206,0.04823300399993968,0.0470517949997884],[0.13470358900030988,0.007704704999923706,0.006628890000229148],[0.13843043999986548,0.006789723999645503,0.006517027999962011],[0.08625227099992117,0.0081432560000394,0.00758258299993031]],"source":"duckdb/results/c6a.4xlarge.json"}
+,{"system":"DuckDB","date":"2023-09-26","machine":"c6a.metal, 500gb gp2","cluster_size":1,"tags":["C++","column-oriented","embedded"],"load_time":143.93,"data_size":28223746048,"result":[[0.03236215499964601,0.001631959999940591,0.0017349720001220703],[0.2017167620001601,0.004977931000212266,0.004112590999739041],[1.7824451350002164,0.01057577699975809,0.00924506499995914],[1.5068001750000803,0.011147404999974242,0.008505592999881628],[1.9968912629997249,0.3409851499995966,0.3641603260002739],[2.19996057499975,0.42094028299970887,0.37727264799968907],[0.21778730100004395,0.009304663999955665,0.006554180999955861],[0.6552495579999231,0.00758900300024834,0.006111935000262747],[3.237778974000321,0.37195273199995427,0.37644760800003496],[4.101916444999915,0.3916224780000448,0.4356481650002024],[1.981583973999932,0.10101389099963853,0.0828059509999548],[2.5021246000001156,0.12936520600032964,0.06469776399990224],[2.0287027350000244,0.2671814919999633,0.2580042009999488],[5.0058850400000665,2.5847008529999584,0.9242121399997814],[2.3203943019998405,0.23897008799985997,0.2951310849998663],[0.9209703480000826,0.37256716299998516,0.20133301800024128],[3.6552786790002756,0.49283485800015114,0.4653434940000807],[3.684886160000133,0.5913837480002258,0.6050533939996967],[6.08533725999996,1.1212222939998355,1.2291971190002187],[0.7086644400001205,0.012204473000110738,0.011541186000158632],[22.877518454999972,0.24069266800006517,0.14223928199999136],[24.865264503000162,0.11923907699974734,0.09882567700014988],[44.523412047999955,0.43662231000007523,0.2732989429996451],[106.65310618600006,2.291449360000115,1.0823644299998705],[4.273118970999803,0.11639817900004346,0.04853129599996464],[1.9446537600001648,0.18474681899988354,0.07775153500006127],[4.282858682999631,0.1974552310002764,0.07218202500007465],[22.900311010999758,0.16852921000008791,0.137986748000003],[15.712022881999928,1.605772540000089,1.495060542000374],[0.35286867500008157,0.12376627899993764,0.09917158700000073],[4.9339620559999275,0.19886905099974683,0.25272748499992304],[7.844819150999683,0.2757238479998705,0.3000885700002982],[6.1183534870001495,1.578629292000187,1.6954807430001892],[22.53793776099974,1.0309925289998318,1.407939608000106],[22.57955366799979,1.7960458739999012,2.255313027000284],[0.6876235540003108,0.331532089999655,0.2276349650001066],[1.1719605680000313,0.061066774999744666,0.040371307999976125],[1.5213748269998177,0.04644827699985399,0.03365288300028624],[1.7530375439996533,0.05019643499963422,0.02876765000019077],[3.1484079319998273,0.09479282800020883,0.059220590999757405],[2.582429621999836,0.03467660899968905,0.013035046999902988],[3.2146319700000276,0.03065071499986516,0.013175667999803409],[1.291933348999919,0.027330930000061926,0.011119961000076728]],"source":"duckdb/results/c6a.metal.json"}
+]; // end of data
+
+const additional_data_size_points = [
+{"fake": true, "system": "hits.tsv", "data_size": 74807831229},
+{"fake": true, "system": "hits.csv", "data_size": 81136059858},
+{"fake": true, "system": "hits.json", "data_size": 232733025002},
+{"fake": true, "system": "hits.parquet", "data_size": 14779976446},
+{"fake": true, "system": "hits.tsv.gz", "data_size": 16298506510},
+{"fake": true, "system": "hits.csv.gz", "data_size": 16608960810},
+{"fake": true, "system": "hits.json.gz", "data_size": 23728268670}
+];
+    </script>
+</head>
+<body>
+
+<div class="header stick-left">
+    <span class="nowrap themes"><span id="toggle-dark">🌚</span><span id="toggle-light">🌞</span></span>
+    <h1>ClickBench — a Benchmark For Analytical DBMS</h1>
+    <a href="https://github.com/ClickHouse/ClickBench/">Methodology</a> | <a href="https://github.com/ClickHouse/ClickBench/">Reproduce and Validate the Results</a> | <a href="https://github.com/ClickHouse/ClickBench/">Add a System</a> | <a href="https://github.com/ClickHouse/ClickBench/">Report Mistake</a> | <a href="https://benchmark.clickhouse.com/hardware/">Hardware Benchmark</a> | <a href="https://benchmark.clickhouse.com/versions/">Versions Benchmark</a>
+</div>
+
+<table class="selectors-container stick-left">
+    <tr>
+        <th>System: </th>
+        <td id="selectors_system">
+            <a id="select-all-systems" class="selector selector-active">All</a>
+        </td>
+    </tr>
+    <tr>
+        <th>Type: </th>
+        <td id="selectors_type">
+            <a id="select-all-types" class="selector selector-active">All</a>
+        </td>
+    </tr>
+    <tr>
+        <th>Machine: </th>
+        <td id="selectors_machine">
+            <a id="select-all-machines" class="selector selector-active">All</a>
+        </td>
+    </tr>
+    <tr>
+        <th>Cluster size: </th>
+        <td id="selectors_cluster_size">
+            <a id="select-all-cluster-sizes" class="selector selector-active">All</a>
+        </td>
+    </tr>
+    <tr>
+        <th>Metric: </th>
+        <td id="selectors_run">
+            <a class="selector" id="selector-metric-cold">Cold Run</a>
+            <a class="selector" id="selector-metric-hot">Hot Run</a>
+            <a class="selector" id="selector-metric-load">Load Time</a>
+            <a class="selector" id="selector-metric-size">Storage Size</a>
+        </td>
+    </tr>
+</table>
+
+<table class="stick-left comparison">
+    <thead>
+        <tr>
+            <th class="summary-name">
+                System &amp; Machine
+            </th>
+            <th colspan="2">
+                Relative <span id="time-or-size">time</span> (lower is better)
+            </th>
+        </tr>
+    </thead>
+    <tbody id="summary">
+    </tbody>
+</table>
+
+<div id="nothing-selected" class="stick-left">Nothing selected</div>
+
+<div class="stick-left comparison">
+    <h2>Detailed Comparison</h2>
+</div>
+
+<table id="details">
+    <thead>
+        <tr id="details_head">
+        </tr>
+    </thead>
+    <tbody id="details_body">
+    </tbody>
+</table>
+
+<script type="text/javascript">
+
+const constant_time_add = 0.01;
+const missing_result_penalty = 2;
+const missing_result_time = 300;
+
+let selectors = {
+    "system": {},
+    "type": {},
+    "machine": {},
+    "cluster_size": {},
+    "metric": "hot",
+    "queries": [],
+};
+
+let theme = 'light';
+
+function setTheme(new_theme) {
+    theme = new_theme;
+    document.documentElement.setAttribute('data-theme', theme);
+    window.localStorage.setItem('theme', theme);
+    render();
+}
+
+document.getElementById('toggle-light').addEventListener('click', e => setTheme('light'));
+document.getElementById('toggle-dark').addEventListener('click', e => setTheme('dark'));
+
+let new_theme = window.localStorage.getItem('theme');
+if (new_theme && new_theme != theme) {
+    setTheme(new_theme);
+}
+
+/// Generate selectors
+
+let systems = document.getElementById('selectors_system');
+let types = document.getElementById('selectors_type');
+let machines = document.getElementById('selectors_machine');
+let cluster_sizes = document.getElementById('selectors_cluster_size');
+
+let unique_systems = [... new Set(data.map(elem => elem.system))];
+
+function toggle(e, elem, selectors_map) {
+    selectors_map[elem] = !selectors_map[elem];
+    e.target.className = selectors_map[elem] ? 'selector selector-active' : 'selector';
+    render();
+    updateHistory();
+}
+
+function toggleAll(e, selectors_map) {
+    const new_value = Object.keys(selectors_map).filter(k => selectors_map[k]).length * 2 < Object.keys(selectors_map).length;
+    [...e.target.parentElement.querySelectorAll('a')].map(
+        elem => { elem.className = new_value ? 'selector selector-active' : 'selector' });
+
+    Object.keys(selectors_map).map(k => { selectors_map[k] = new_value });
+    render();
+    updateHistory();
+}
+
+unique_systems.map(elem => {
+    let selector = document.createElement('a');
+    selector.className = 'selector selector-active';
+    selector.appendChild(document.createTextNode(elem));
+    systems.appendChild(selector);
+    if (!(elem in selectors.system)) { selectors.system[elem] = data.some(entry => entry.system == elem && !entry.hide); }
+    selector.addEventListener('click', e => toggle(e, elem, selectors.system));
+
+    /// Highlighting summary rows and table columns on hovering over the system selector.
+    selector.addEventListener('mouseover', e => {
+        [...document.querySelectorAll('.summary-row')].map(row => {
+            row.className = row.dataset.system == elem ? 'summary-row summary-row-hilite' : 'summary-row' });
+        [...document.querySelectorAll('.th-entry')].map(th => {
+            th.className = th.dataset.system == elem ? 'th-entry th-entry-hilite' : 'th-entry' });
+    });
+    selector.addEventListener('mouseout', e => {
+        [...document.querySelectorAll('.summary-row')].map(row => { row.className = 'summary-row' });
+        [...document.querySelectorAll('.th-entry')].map(row => { row.className = 'th-entry' });
+    });
+});
+
+[... new Set(data.map(elem => elem.tags).flat())].map(elem => {
+    let selector = document.createElement('a');
+    selector.className = 'selector selector-active';
+    selector.appendChild(document.createTextNode(elem));
+    types.appendChild(selector);
+    if (!(elem in selectors.type)) { selectors.type[elem] = true; }
+    selector.addEventListener('click', e => toggle(e, elem, selectors.type));
+});
+
+[... new Set(data.map(elem => elem.machine))].map(elem => {
+    let selector = document.createElement('a');
+    selector.className = 'selector selector-active';
+    selector.appendChild(document.createTextNode(elem));
+    machines.appendChild(selector);
+    if (!(elem in selectors.machine)) { selectors.machine[elem] = true; }
+    selector.addEventListener('click', e => toggle(e, elem, selectors.machine));
+});
+
+[... new Set(data.map(elem => elem.cluster_size))].sort(
+    (a, b) => ((typeof(b) === 'number') - (typeof(a) === 'number')) || (a - b)).map(elem => {
+    let selector = document.createElement('a');
+    selector.className = 'selector selector-active';
+    selector.appendChild(document.createTextNode(elem));
+    cluster_sizes.appendChild(selector);
+    if (!(elem in selectors.cluster_size)) { selectors.cluster_size[elem] = true; }
+    selector.addEventListener('click', e => toggle(e, elem, selectors.cluster_size));
+});
+
+document.getElementById('select-all-systems').addEventListener('click', e => toggleAll(e, selectors.system));
+document.getElementById('select-all-types').addEventListener('click', e => toggleAll(e, selectors.type));
+document.getElementById('select-all-machines').addEventListener('click', e => toggleAll(e, selectors.machine));
+document.getElementById('select-all-cluster-sizes').addEventListener('click', e => toggleAll(e, selectors.cluster_size));
+
+[...document.getElementById('selectors_run').querySelectorAll('a')].map(elem => elem.addEventListener('click', e => {
+    [...e.target.parentElement.querySelectorAll('a')].map(elem => { elem.className = elem == e.target ? 'selector selector-active' : 'selector' });
+}));
+
+document.getElementById('selector-metric-cold').addEventListener('click', e => { selectors.metric = 'cold'; render(); updateHistory(); });
+document.getElementById('selector-metric-hot').addEventListener('click', e => { selectors.metric = 'hot'; render(); updateHistory(); });
+document.getElementById('selector-metric-load').addEventListener('click', e => { selectors.metric = 'load'; render(); updateHistory(); });
+document.getElementById('selector-metric-size').addEventListener('click', e => { selectors.metric = 'size'; render(); updateHistory(); });
+
+selectors.queries = [...data[0].result.keys()].map(k => true);
+
+function updateSelectors() {
+    [...systems.childNodes].map(elem => { elem.className = selectors.system[elem.innerText] ? 'selector selector-active' : 'selector' });
+    [...types.childNodes].map(elem => { elem.className = selectors.type[elem.innerText] ? 'selector selector-active' : 'selector' });
+    [...machines.childNodes].map(elem => { elem.className = selectors.machine[elem.innerText] ? 'selector selector-active' : 'selector' });
+    [...cluster_sizes.childNodes].map(elem => { elem.className = selectors.cluster_size[elem.innerText] ? 'selector selector-active' : 'selector' });
+
+    [...document.getElementById('selectors_run').querySelectorAll('a')].map(elem => {
+        elem.className = elem.id == 'selector-metric-' + selectors.metric ? 'selector selector-active' : 'selector' });
+
+    [...document.querySelectorAll('.query-checkbox')].map((elem, i) => { elem.checked = selectors.queries[i] });
+}
+
+function clearElement(elem)
+{
+    while (elem.firstChild) {
+        elem.removeChild(elem.lastChild);
+    }
+}
+
+function selectRun(timings) {
+    return selectors.metric == 'cold' ? timings[0] : (timings[1] !== null && timings[2] !== null ? Math.min(timings[1], timings[2]) : null)
+}
+
+function addNote(text) {
+    let note = document.createElement('sup');
+    note.className = 'note';
+    note.appendChild(document.createTextNode('†'));
+
+    let tooltip = document.createElement('span');
+    tooltip.className = 'tooltip tooltip-result';
+    tooltip.appendChild(document.createTextNode(text));
+
+    note.appendChild(tooltip);
+    return note;
+}
+
+function renderSummary(filtered_data) {
+    let table = document.getElementById('summary');
+    clearElement(table);
+
+    /// Generate summary
+
+    /// The algorithm: for each of the queries,
+    /// - if there is a result - take query duration, add 10 ms, and divide it to the corresponding value from the baseline,
+    /// - if there is no result - take the worse query duration across all query runs for this system and multiply by 2.
+    /// Take geometric mean across the queries.
+
+    let summary = {};
+
+    const num_queries = filtered_data[0].result.length;
+
+    const baseline_data = [...filtered_data[0].result.keys()].map(query_num =>
+        [...Array(3).keys()].map(run_num =>
+            Math.min(...filtered_data.filter(elem => !elem.fake).map(elem => elem.result[query_num][run_num]).filter(x => x))));
+
+    const min_load_time = Math.min(...filtered_data.map(elem => elem.load_time).filter(x => x));
+    const min_data_size = Math.min(...filtered_data.map(elem => elem.data_size).filter(x => x));
+
+    let summaries;
+    if (selectors.metric == 'load') {
+        summaries = filtered_data.map(elem => elem.load_time / min_load_time);
+        document.getElementById('time-or-size').innerText = 'time';
+    } else if (selectors.metric == 'size') {
+        summaries = filtered_data.map(elem => elem.data_size / min_data_size);
+        document.getElementById('time-or-size').innerText = 'size';
+    } else {
+        summaries = filtered_data.map(elem => {
+            const fallback_timing = missing_result_penalty * Math.max(missing_result_time, ...elem.result.map(timings => selectRun(timings)));
+
+            let accumulator = 0;
+            let used_queries = 0;
+
+            const no_queries_selected = selectors.queries.filter(x => x).length == 0;
+
+            for (let i = 0; i < num_queries; ++i) {
+                if (no_queries_selected || selectors.queries[i]) {
+                    const curr_timing = selectRun(elem.result[i]) ?? fallback_timing;
+                    const baseline_timing = selectRun(baseline_data[i]);
+                    const ratio = (constant_time_add + curr_timing) / (constant_time_add + baseline_timing);
+                    accumulator += Math.log(ratio);
+                    ++used_queries;
+                }
+            }
+
+            return Math.exp(accumulator / used_queries);
+        });
+        document.getElementById('time-or-size').innerText = 'time';
+    }
+
+    const sorted_indices = [...summaries.keys()].sort((a, b) => summaries[a] - summaries[b]);
+    const max_ratio = summaries[sorted_indices[sorted_indices.length - 1]];
+
+    sorted_indices.map(idx => {
+        const elem = filtered_data[idx];
+
+        if (selectors.metric == 'size' && elem.data_size === null) { return; }
+
+        let tr = document.createElement('tr');
+        tr.className = 'summary-row';
+
+        tr.dataset.system = elem.system;
+
+        let td_name = document.createElement('td');
+        td_name.className = 'summary-name';
+
+        if (!elem.fake) {
+            let link = document.createElement('a');
+            link.appendChild(document.createTextNode(`${elem.system} (${Number.isInteger(elem.cluster_size) && elem.cluster_size > 1 ? elem.cluster_size + '×': ''}${elem.machine})`));
+            link.href = "https://github.com/ClickHouse/ClickBench/blob/main/" + elem.source;
+            td_name.appendChild(link);
+        } else {
+            td_name.appendChild(document.createTextNode(elem.system));
+        }
+
+        if (elem.comment) { td_name.appendChild(addNote(elem.comment)); }
+        td_name.appendChild(document.createTextNode(': '));
+
+        const ratio = summaries[idx];
+        const percentage = summaries[idx] / max_ratio * 100;
+
+        let td_number = document.createElement('td');
+        td_number.className = 'summary-number';
+
+        const text = selectors.metric == 'load' ? (elem.load_time ? `${Math.round(elem.load_time)}s (×${ratio.toFixed(2)})` : 'stateless')
+            :  selectors.metric == 'size' ? `${(elem.data_size / 1024 / 1024 / 1024).toFixed(2)} GiB (×${ratio.toFixed(2)})`
+            : `×${ratio.toFixed(2)}`;
+
+        td_number.appendChild(document.createTextNode(text));
+
+        let td_bar = document.createElement('td');
+        td_bar.className = 'summary-bar-cell';
+
+        let bar = document.createElement('div');
+
+        bar.className = `summary-bar`;
+        bar.style.width = `${percentage}%`;
+
+        td_bar.appendChild(bar);
+
+        tr.appendChild(td_name);
+        tr.appendChild(td_bar);
+        tr.appendChild(td_number);
+        table.appendChild(tr);
+    });
+
+    return [sorted_indices, baseline_data];
+}
+
+function colorize(elem, ratio) {
+    let [r, g, b] = [0, 0, 0];
+
+    /// ratio less than 1 - green
+    /// ratio from 1 to 2 - green to yellow
+    /// ratio from 2 to 10 - yellow to red
+    /// ratio from 10 to 1000 to infinity - red to brown to black
+
+    /// Note: we are using RGB space without proper gamma correction. Read more: https://www.handprint.com/HP/WCL/color1.html
+
+    if (ratio !== null) {
+        if (ratio < 1) {
+            r = 232;
+            g = 255;
+            b = 232;
+        } else if (ratio <= 1) {
+            g = 255;
+        } else if (ratio <= 2) {
+            g = 255;
+            r = (ratio - 1) * 255;
+        } else if (ratio <= 10) {
+            g = (10 - ratio) / 8 * 255;
+            r = 255;
+        } else {
+            r = (1 - ((ratio - 10) / ((ratio - 10) + 1000))) * 255;
+        }
+    }
+
+    if (document.documentElement.getAttribute('data-theme') == 'dark') {
+        r /= 1.5;
+        g /= 1.5;
+        b /= 1.5;
+    }
+
+    elem.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+    if (ratio === null || ratio > 10) {
+        /// This will look better on dark backgrounds
+        elem.style.color = 'white';
+    } else {
+        elem.style.color = 'black';
+    }
+
+    /// The best result is highlighted
+    if (ratio == 1) {
+        elem.style.fontWeight = 'bold';
+    }
+}
+
+function render() {
+    let details_head = document.getElementById('details_head');
+    let details_body = document.getElementById('details_body');
+
+    clearElement(details_head);
+    clearElement(details_body);
+
+    let filtered_data = data.filter(elem =>
+        selectors.system[elem.system] &&
+        selectors.machine[elem.machine] &&
+        selectors.cluster_size[elem.cluster_size] &&
+        elem.tags.filter(type => selectors.type[type]).length > 0);
+
+    let nothing_selected_elem = document.getElementById('nothing-selected');
+    if (filtered_data.length == 0) {
+        nothing_selected_elem.style.display = 'block';
+        [...document.querySelectorAll('.comparison')].map(e => e.style.display = 'none');
+        return;
+    }
+    nothing_selected_elem.style.display = 'none';
+    [...document.querySelectorAll('.comparison')].map(e => e.style.display = 'block');
+
+    if (selectors.metric == 'size') {
+        filtered_data = [...filtered_data, ...additional_data_size_points];
+    }
+
+    let [sorted_indices, baseline_data] = renderSummary(filtered_data);
+    sorted_indices = sorted_indices.filter(idx => !filtered_data[idx].fake);
+
+    /// Generate details
+
+    /// Global checkbox
+    {
+        let th_checkbox = document.createElement('th');
+        let checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = true;
+        checkbox.addEventListener('change', e => {
+            [...document.querySelectorAll('.query-checkbox')].map(elem => { elem.checked = e.target.checked });
+            selectors.queries.map((_, i) => { selectors.queries[i] = e.target.checked });
+            renderSummary(filtered_data);
+            updateHistory();
+        });
+        th_checkbox.appendChild(checkbox);
+        details_head.appendChild(th_checkbox);
+        details_head.appendChild(document.createElement('th'));
+    }
+
+    /// Table header
+    sorted_indices.map(idx => {
+        const elem = filtered_data[idx];
+        let th = document.createElement('th');
+        th.appendChild(document.createTextNode(`${elem.system}\n(${Number.isInteger(elem.cluster_size) && elem.cluster_size > 1 ? elem.cluster_size + '×': ''}${elem.machine})`));
+        th.className = 'th-entry';
+        th.dataset.system = elem.system;
+        details_head.appendChild(th);
+    });
+
+    /// Load times
+    {
+        let tr = document.createElement('tr');
+        tr.className = 'shadow';
+
+        let td_title = document.createElement('td');
+        td_title.colSpan = 2;
+        td_title.appendChild(document.createTextNode('Load time: '));
+        tr.appendChild(td_title);
+
+        sorted_indices.map(idx => {
+            const curr_timing = filtered_data[idx].load_time;
+            const baseline_timing = Math.min(...filtered_data.map(elem => elem.load_time).filter(x => x));
+            const ratio = curr_timing / baseline_timing;
+
+            let td = document.createElement('td');
+            td.appendChild(document.createTextNode(curr_timing ? `${Math.round(curr_timing)}s (×${ratio.toFixed(2)})` : '0'));
+
+            colorize(td, ratio);
+            tr.appendChild(td);
+        });
+
+        details_body.appendChild(tr);
+    }
+
+    /// Data sizes
+    {
+        let tr = document.createElement('tr');
+        tr.className = 'shadow';
+
+        let td_title = document.createElement('td');
+        td_title.colSpan = 2;
+        td_title.appendChild(document.createTextNode('Data size: '));
+        tr.appendChild(td_title);
+
+        sorted_indices.map(idx => {
+            const curr_size = filtered_data[idx].data_size;
+            const baseline_size = Math.min(...filtered_data.map(elem => elem.data_size).filter(x => x));
+            const ratio = curr_size !== null ? curr_size / baseline_size : null;
+
+            let td = document.createElement('td');
+            td.appendChild(document.createTextNode(curr_size !== null ? `${(curr_size / 1024 / 1024 / 1024).toFixed(2)} GiB (×${ratio.toFixed(2)})` : '☠'));
+
+            colorize(td, ratio);
+            tr.appendChild(td);
+        });
+
+        details_body.appendChild(tr);
+    }
+
+    /// Query runtimes
+    const num_queries = filtered_data[0].result.length;
+
+    for (let query_num = 0; query_num < num_queries; ++query_num) {
+        let tr = document.createElement('tr');
+        tr.className = 'shadow';
+
+        let td_checkbox = document.createElement('td');
+        let checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'query-checkbox';
+        checkbox.checked = selectors.queries[query_num];
+        checkbox.addEventListener('change', e => {
+            selectors.queries[query_num] = e.target.checked;
+            renderSummary(filtered_data);
+            updateHistory();
+        });
+        td_checkbox.appendChild(checkbox);
+        tr.appendChild(td_checkbox);
+
+        let td_query_num = document.createElement('td');
+        td_query_num.className = 'note';
+        td_query_num.appendChild(document.createTextNode(`Q${query_num}. `));
+
+        let tooltip = document.createElement('span');
+        tooltip.className = 'tooltip tooltip-query';
+        tooltip.appendChild(document.createTextNode(`Query ${query_num}: ${queries[query_num]}`));
+        td_query_num.appendChild(tooltip);
+
+        tr.appendChild(td_query_num);
+
+        sorted_indices.map(idx => {
+            const curr_timing = selectRun(filtered_data[idx].result[query_num]);
+            const baseline_timing = selectRun(baseline_data[query_num]);
+            const ratio = curr_timing !== null ? (constant_time_add + curr_timing) / (constant_time_add + baseline_timing) : null;
+
+            let td = document.createElement('td');
+            td.appendChild(document.createTextNode(curr_timing !== null ? `${curr_timing.toFixed(2)}s (×${ratio.toFixed(2)})` : '☠'));
+
+            colorize(td, ratio);
+            tr.appendChild(td);
+        });
+
+        details_body.appendChild(tr);
+    }
+}
+
+function updateHistory() {
+    history.pushState(selectors, '',
+        window.location.pathname + (window.location.search || '') + '#' + btoa(JSON.stringify(selectors)));
+}
+
+window.onpopstate = function(event) {
+    if (!event.state) { return; }
+    selectors = event.state;
+    render();
+    updateSelectors();
+};
+
+if (window.location.hash) {
+    try {
+        selectors = JSON.parse(atob(window.location.hash.substring(1)));
+    } catch {}
+}
+
+render();
+updateSelectors();
+
+</script>
+</body>
+</html>
