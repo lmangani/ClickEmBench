@@ -4,6 +4,8 @@ on:
 
 permissions:
   contents: read
+  pages: write
+  id-token: write
 
 jobs:
   build:
@@ -37,11 +39,12 @@ jobs:
         ./generate-results.sh
         mkdir public
         mv index.html public/
-
-    - name: Deploy Results to GitHub Pages
-      uses: crazy-max/ghaction-github-pages@v4
+        
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v2
       with:
-          target_branch: gh-pages
-          build_dir: public
-      env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        path: 'public'
+          
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v2
