@@ -12,9 +12,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
-      max-parallel: 1
+      max-parallel: 2
       matrix:
-        DBNAME: [ "chdb", "duckdb"]
+        DBNAME: [ "duckdb", "chdb"]
   
     steps:
     - uses: actions/checkout@v3
