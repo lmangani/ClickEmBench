@@ -14,7 +14,7 @@ jobs:
       fail-fast: true
       max-parallel: 2
       matrix:
-        DBNAME: [ "duckdb", "chdb"]
+        DBNAME: [ "chdb", "duckdb" ]
   
     steps:
     - uses: actions/checkout@v3
