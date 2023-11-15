@@ -33,6 +33,7 @@ jobs:
       run: |
         cd ${{ matrix.DBNAME }}
         ./benchmark.sh
+        ./convert.sh
 
     - name: Generate Results
       run: |
