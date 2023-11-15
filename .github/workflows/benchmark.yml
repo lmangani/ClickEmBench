@@ -34,7 +34,7 @@ jobs:
 
     - name: Generate Results
       run: |
-        ./generate_results.sh
+        ./generate-results.sh
         mkdir public
         mv index.html public/
 
