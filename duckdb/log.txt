@@ -1,0 +1,276 @@
+SELECT COUNT(*) FROM 'hits_*.parquet';
+
+0.015640205000011065
+0.0031751619999909053
+0.0030979599999909624
+SELECT COUNT(*) FROM 'hits_*.parquet' WHERE AdvEngineID <> 0;
+
+0.02938857399999506
+0.009070377000000462
+0.008886473999979216
+SELECT SUM(AdvEngineID), COUNT(*), AVG(ResolutionWidth) FROM 'hits_*.parquet';
+
+0.03616140600001927
+0.018910368999996763
+0.01842985999999769
+SELECT AVG(UserID) FROM 'hits_*.parquet';
+
+0.04085709699998574
+0.01722813599999995
+0.017156334999981482
+SELECT COUNT(DISTINCT UserID) FROM 'hits_*.parquet';
+
+0.08875803300000484
+0.05954336199999943
+0.05488027100000181
+SELECT COUNT(DISTINCT SearchPhrase) FROM 'hits_*.parquet';
+
+0.1074079969999957
+0.07551507400000901
+0.07335943300000736
+SELECT MIN(EventDate), MAX(EventDate) FROM 'hits_*.parquet';
+
+0.024773083000013685
+0.012551744999996117
+0.012527344999995194
+SELECT AdvEngineID, COUNT(*) FROM 'hits_*.parquet' WHERE AdvEngineID <> 0 GROUP BY AdvEngineID ORDER BY COUNT(*) DESC;
+
+0.03346525399999223
+0.010435603999980003
+0.009661389000001464
+SELECT RegionID, COUNT(DISTINCT UserID) AS u FROM 'hits_*.parquet' GROUP BY RegionID ORDER BY u DESC LIMIT 10;
+
+0.11120807099999297
+0.07920334700000353
+0.07948775200000568
+SELECT RegionID, SUM(AdvEngineID), COUNT(*) AS c, AVG(ResolutionWidth), COUNT(DISTINCT UserID) FROM 'hits_*.parquet' GROUP BY RegionID ORDER BY c DESC LIMIT 10;
+
+0.15976641899999322
+0.1181290070000216
+0.119537734000005
+SELECT MobilePhoneModel, COUNT(DISTINCT UserID) AS u FROM 'hits_*.parquet' WHERE MobilePhoneModel <> '' GROUP BY MobilePhoneModel ORDER BY u DESC LIMIT 10;
+
+0.06174098799999683
+0.03369819400001006
+0.03429640499999209
+SELECT MobilePhone, MobilePhoneModel, COUNT(DISTINCT UserID) AS u FROM 'hits_*.parquet' WHERE MobilePhoneModel <> '' GROUP BY MobilePhone, MobilePhoneModel ORDER BY u DESC LIMIT 10;
+
+0.0706604460000051
+0.0410564240000042
+0.04013800699999592
+SELECT SearchPhrase, COUNT(*) AS c FROM 'hits_*.parquet' WHERE SearchPhrase <> '' GROUP BY SearchPhrase ORDER BY c DESC LIMIT 10;
+
+0.10603966900001183
+0.0694123240000124
+0.06620286700001543
+SELECT SearchPhrase, COUNT(DISTINCT UserID) AS u FROM 'hits_*.parquet' WHERE SearchPhrase <> '' GROUP BY SearchPhrase ORDER BY u DESC LIMIT 10;
+
+0.14265961399999583
+0.09129200900000001
+0.0919217200000162
+SELECT SearchEngineID, SearchPhrase, COUNT(*) AS c FROM 'hits_*.parquet' WHERE SearchPhrase <> '' GROUP BY SearchEngineID, SearchPhrase ORDER BY c DESC LIMIT 10;
+
+0.11497682600000303
+0.07729316300000733
+0.07935639900000524
+SELECT UserID, COUNT(*) FROM 'hits_*.parquet' GROUP BY UserID ORDER BY COUNT(*) DESC LIMIT 10;
+
+0.0948684720000017
+0.0662140670000042
+0.06769619299998908
+SELECT UserID, SearchPhrase, COUNT(*) FROM 'hits_*.parquet' GROUP BY UserID, SearchPhrase ORDER BY COUNT(*) DESC LIMIT 10;
+
+0.16976459200000704
+0.12429329100001496
+0.12513810499999067
+SELECT UserID, SearchPhrase, COUNT(*) FROM 'hits_*.parquet' GROUP BY UserID, SearchPhrase LIMIT 10;
+
+0.15973561499998823
+0.11375780500000587
+0.11122186000000056
+SELECT UserID, extract(minute FROM EventTime) AS m, SearchPhrase, COUNT(*) FROM 'hits_*.parquet' GROUP BY UserID, m, SearchPhrase ORDER BY COUNT(*) DESC LIMIT 10;
+
+Traceback (most recent call last):
+  File "/home/runner/work/ClickEmBench/ClickEmBench/duckdb/./query.py", line 17, in <module>
+    results = con.execute(query).fetchall()
+duckdb.duckdb.BinderException: Binder Error: No function matches the given name and argument types 'date_part(VARCHAR, BIGINT)'. You might need to add explicit type casts.
+	Candidate functions:
+	date_part(VARCHAR, DATE) -> BIGINT
+	date_part(VARCHAR, TIMESTAMP) -> BIGINT
+	date_part(VARCHAR, TIME) -> BIGINT
+	date_part(VARCHAR, INTERVAL) -> BIGINT
+	date_part(VARCHAR[], DATE) -> STRUCT()
+	date_part(VARCHAR[], TIMESTAMP) -> STRUCT()
+	date_part(VARCHAR[], TIME) -> STRUCT()
+	date_part(VARCHAR[], INTERVAL) -> STRUCT()
+	date_part(VARCHAR, TIMESTAMP WITH TIME ZONE) -> BIGINT
+	date_part(VARCHAR[], TIMESTAMP WITH TIME ZONE) -> STRUCT()
+
+LINE 1: SELECT UserID, extract(minute FROM EventTime) AS m, Se...
+                       ^
+SELECT UserID FROM 'hits_*.parquet' WHERE UserID = 435090932899640449;
+
+0.05553177799998821
+0.0293871180000167
+0.029493320000000267
+SELECT COUNT(*) FROM 'hits_*.parquet' WHERE URL LIKE '%google%';
+
+Traceback (most recent call last):
+  File "/home/runner/work/ClickEmBench/ClickEmBench/duckdb/./query.py", line 17, in <module>
+    results = con.execute(query).fetchall()
+duckdb.duckdb.BinderException: Binder Error: No function matches the given name and argument types '~~(BLOB, VARCHAR)'. You might need to add explicit type casts.
+	Candidate functions:
+	~~(VARCHAR, VARCHAR) -> BOOLEAN
+
+LINE 1: ...UNT(*) FROM 'hits_*.parquet' WHERE URL LIKE '%google%';
+                                                  ^
+SELECT SearchPhrase, MIN(URL), COUNT(*) AS c FROM 'hits_*.parquet' WHERE URL LIKE '%google%' AND SearchPhrase <> '' GROUP BY SearchPhrase ORDER BY c DESC LIMIT 10;
+
+Traceback (most recent call last):
+  File "/home/runner/work/ClickEmBench/ClickEmBench/duckdb/./query.py", line 17, in <module>
+    results = con.execute(query).fetchall()
+duckdb.duckdb.BinderException: Binder Error: No function matches the given name and argument types '~~(BLOB, VARCHAR)'. You might need to add explicit type casts.
+	Candidate functions:
+	~~(VARCHAR, VARCHAR) -> BOOLEAN
+
+LINE 1: ...) AS c FROM 'hits_*.parquet' WHERE URL LIKE '%google%' AND SearchPhrase <> '' ...
+                                                  ^
+SELECT SearchPhrase, MIN(URL), MIN(Title), COUNT(*) AS c, COUNT(DISTINCT UserID) FROM 'hits_*.parquet' WHERE Title LIKE '%Google%' AND URL NOT LIKE '%.google.%' AND SearchPhrase <> '' GROUP BY SearchPhrase ORDER BY c DESC LIMIT 10;
+
+Traceback (most recent call last):
+  File "/home/runner/work/ClickEmBench/ClickEmBench/duckdb/./query.py", line 17, in <module>
+    results = con.execute(query).fetchall()
+duckdb.duckdb.BinderException: Binder Error: No function matches the given name and argument types '~~(BLOB, VARCHAR)'. You might need to add explicit type casts.
+	Candidate functions:
+	~~(VARCHAR, VARCHAR) -> BOOLEAN
+
+LINE 1: ...rID) FROM 'hits_*.parquet' WHERE Title LIKE '%Google%' AND URL NOT LIKE '%.goo...
+                                                  ^
+SELECT * FROM 'hits_*.parquet' WHERE URL LIKE '%google%' ORDER BY EventTime LIMIT 10;
+
+Traceback (most recent call last):
+  File "/home/runner/work/ClickEmBench/ClickEmBench/duckdb/./query.py", line 17, in <module>
+    results = con.execute(query).fetchall()
+duckdb.duckdb.BinderException: Binder Error: No function matches the given name and argument types '~~(BLOB, VARCHAR)'. You might need to add explicit type casts.
+	Candidate functions:
+	~~(VARCHAR, VARCHAR) -> BOOLEAN
+
+LINE 1: ...LECT * FROM 'hits_*.parquet' WHERE URL LIKE '%google%' ORDER BY EventTime LIMI...
+                                                  ^
+SELECT SearchPhrase FROM 'hits_*.parquet' WHERE SearchPhrase <> '' ORDER BY EventTime LIMIT 10;
+
+0.10821412100000316
+0.06147375800000532
+0.06001625799999033
+SELECT SearchPhrase FROM 'hits_*.parquet' WHERE SearchPhrase <> '' ORDER BY SearchPhrase LIMIT 10;
+
+0.0841361230000075
+0.05213370600000644
+0.05167219700001624
+SELECT SearchPhrase FROM 'hits_*.parquet' WHERE SearchPhrase <> '' ORDER BY EventTime, SearchPhrase LIMIT 10;
+
+0.1119046590000039
+0.06469264800000474
+0.06441704400000958
+SELECT CounterID, AVG(STRLEN(URL)) AS l, COUNT(*) AS c FROM 'hits_*.parquet' WHERE URL <> '' GROUP BY CounterID HAVING COUNT(*) > 100000 ORDER BY l DESC LIMIT 25;
+
+Traceback (most recent call last):
+  File "/home/runner/work/ClickEmBench/ClickEmBench/duckdb/./query.py", line 17, in <module>
+    results = con.execute(query).fetchall()
+duckdb.duckdb.BinderException: Binder Error: No function matches the given name and argument types 'strlen(BLOB)'. You might need to add explicit type casts.
+	Candidate functions:
+	strlen(VARCHAR) -> BIGINT
+
+LINE 1: SELECT CounterID, AVG(STRLEN(URL)) AS l, COUNT(*) AS c FROM '...
+                              ^
+SELECT REGEXP_REPLACE(Referer, '^https?://(?:www.)?([^/]+)/.*$', '1') AS k, AVG(STRLEN(Referer)) AS l, COUNT(*) AS c, MIN(Referer) FROM 'hits_*.parquet' WHERE Referer <> '' GROUP BY k HAVING COUNT(*) > 100000 ORDER BY l DESC LIMIT 25;
+
+Traceback (most recent call last):
+  File "/home/runner/work/ClickEmBench/ClickEmBench/duckdb/./query.py", line 17, in <module>
+    results = con.execute(query).fetchall()
+duckdb.duckdb.BinderException: Binder Error: No function matches the given name and argument types 'regexp_replace(BLOB, VARCHAR, VARCHAR)'. You might need to add explicit type casts.
+	Candidate functions:
+	regexp_replace(VARCHAR, VARCHAR, VARCHAR) -> VARCHAR
+	regexp_replace(VARCHAR, VARCHAR, VARCHAR, VARCHAR) -> VARCHAR
+
+LINE 1: SELECT REGEXP_REPLACE(Referer, '^https?://(?:w...
+               ^
+SELECT SUM(ResolutionWidth), SUM(ResolutionWidth + 1), SUM(ResolutionWidth + 2), SUM(ResolutionWidth + 3), SUM(ResolutionWidth + 4), SUM(ResolutionWidth + 5), SUM(ResolutionWidth + 6), SUM(ResolutionWidth + 7), SUM(ResolutionWidth + 8), SUM(ResolutionWidth + 9), SUM(ResolutionWidth + 10), SUM(ResolutionWidth + 11), SUM(ResolutionWidth + 12), SUM(ResolutionWidth + 13), SUM(ResolutionWidth + 14), SUM(ResolutionWidth + 15), SUM(ResolutionWidth + 16), SUM(ResolutionWidth + 17), SUM(ResolutionWidth + 18), SUM(ResolutionWidth + 19), SUM(ResolutionWidth + 20), SUM(ResolutionWidth + 21), SUM(ResolutionWidth + 22), SUM(ResolutionWidth + 23), SUM(ResolutionWidth + 24), SUM(ResolutionWidth + 25), SUM(ResolutionWidth + 26), SUM(ResolutionWidth + 27), SUM(ResolutionWidth + 28), SUM(ResolutionWidth + 29), SUM(ResolutionWidth + 30), SUM(ResolutionWidth + 31), SUM(ResolutionWidth + 32), SUM(ResolutionWidth + 33), SUM(ResolutionWidth + 34), SUM(ResolutionWidth + 35), SUM(ResolutionWidth + 36), SUM(ResolutionWidth + 37), SUM(ResolutionWidth + 38), SUM(ResolutionWidth + 39), SUM(ResolutionWidth + 40), SUM(ResolutionWidth + 41), SUM(ResolutionWidth + 42), SUM(ResolutionWidth + 43), SUM(ResolutionWidth + 44), SUM(ResolutionWidth + 45), SUM(ResolutionWidth + 46), SUM(ResolutionWidth + 47), SUM(ResolutionWidth + 48), SUM(ResolutionWidth + 49), SUM(ResolutionWidth + 50), SUM(ResolutionWidth + 51), SUM(ResolutionWidth + 52), SUM(ResolutionWidth + 53), SUM(ResolutionWidth + 54), SUM(ResolutionWidth + 55), SUM(ResolutionWidth + 56), SUM(ResolutionWidth + 57), SUM(ResolutionWidth + 58), SUM(ResolutionWidth + 59), SUM(ResolutionWidth + 60), SUM(ResolutionWidth + 61), SUM(ResolutionWidth + 62), SUM(ResolutionWidth + 63), SUM(ResolutionWidth + 64), SUM(ResolutionWidth + 65), SUM(ResolutionWidth + 66), SUM(ResolutionWidth + 67), SUM(ResolutionWidth + 68), SUM(ResolutionWidth + 69), SUM(ResolutionWidth + 70), SUM(ResolutionWidth + 71), SUM(ResolutionWidth + 72), SUM(ResolutionWidth + 73), SUM(ResolutionWidth + 74), SUM(ResolutionWidth + 75), SUM(ResolutionWidth + 76), SUM(ResolutionWidth + 77), SUM(ResolutionWidth + 78), SUM(ResolutionWidth + 79), SUM(ResolutionWidth + 80), SUM(ResolutionWidth + 81), SUM(ResolutionWidth + 82), SUM(ResolutionWidth + 83), SUM(ResolutionWidth + 84), SUM(ResolutionWidth + 85), SUM(ResolutionWidth + 86), SUM(ResolutionWidth + 87), SUM(ResolutionWidth + 88), SUM(ResolutionWidth + 89) FROM 'hits_*.parquet';
+
+0.832355462999999
+0.7824065990000122
+0.785026949000013
+SELECT SearchEngineID, ClientIP, COUNT(*) AS c, SUM(IsRefresh), AVG(ResolutionWidth) FROM 'hits_*.parquet' WHERE SearchPhrase <> '' GROUP BY SearchEngineID, ClientIP ORDER BY c DESC LIMIT 10;
+
+0.138531673000017
+0.11388409699998192
+0.08742418700001053
+SELECT WatchID, ClientIP, COUNT(*) AS c, SUM(IsRefresh), AVG(ResolutionWidth) FROM 'hits_*.parquet' WHERE SearchPhrase <> '' GROUP BY WatchID, ClientIP ORDER BY c DESC LIMIT 10;
+
+0.17749412599999914
+0.10437581499999737
+0.10223787299997866
+SELECT WatchID, ClientIP, COUNT(*) AS c, SUM(IsRefresh), AVG(ResolutionWidth) FROM 'hits_*.parquet' GROUP BY WatchID, ClientIP ORDER BY c DESC LIMIT 10;
+
+0.5588836859999731
+0.4312982230000273
+0.42581793100001164
+SELECT URL, COUNT(*) AS c FROM 'hits_*.parquet' GROUP BY URL ORDER BY c DESC LIMIT 10;
+
+0.6294516560000147
+0.3838944329999947
+0.3824148090000108
+SELECT 1, URL, COUNT(*) AS c FROM 'hits_*.parquet' GROUP BY 1, URL ORDER BY c DESC LIMIT 10;
+
+0.5608191599999941
+0.38910471700000926
+0.40344084499997734
+SELECT ClientIP, ClientIP - 1, ClientIP - 2, ClientIP - 3, COUNT(*) AS c FROM 'hits_*.parquet' GROUP BY ClientIP, ClientIP - 1, ClientIP - 2, ClientIP - 3 ORDER BY c DESC LIMIT 10;
+
+0.14208096999999498
+0.10278884199999538
+0.09676594600000499
+SELECT URL, COUNT(*) AS PageViews FROM 'hits_*.parquet' WHERE CounterID = 62 AND EventDate >= '2013-07-01' AND EventDate <= '2013-07-31' AND DontCountHits = 0 AND IsRefresh = 0 AND URL <> '' GROUP BY URL ORDER BY PageViews DESC LIMIT 10;
+
+0.024108385000005228
+0.0021037329999842314
+0.0016859270000111337
+SELECT Title, COUNT(*) AS PageViews FROM 'hits_*.parquet' WHERE CounterID = 62 AND EventDate >= '2013-07-01' AND EventDate <= '2013-07-31' AND DontCountHits = 0 AND IsRefresh = 0 AND Title <> '' GROUP BY Title ORDER BY PageViews DESC LIMIT 10;
+
+0.022161954000011974
+0.0021632350000118095
+0.0018916299999887087
+SELECT URL, COUNT(*) AS PageViews FROM 'hits_*.parquet' WHERE CounterID = 62 AND EventDate >= '2013-07-01' AND EventDate <= '2013-07-31' AND IsRefresh = 0 AND IsLink <> 0 AND IsDownload = 0 GROUP BY URL ORDER BY PageViews DESC LIMIT 10 OFFSET 1000;
+
+0.02378257999998823
+0.0022199349999993956
+0.0017104279999955452
+SELECT TraficSourceID, SearchEngineID, AdvEngineID, CASE WHEN (SearchEngineID = 0 AND AdvEngineID = 0) THEN Referer ELSE '' END AS Src, URL AS Dst, COUNT(*) AS PageViews FROM 'hits_*.parquet' WHERE CounterID = 62 AND EventDate >= '2013-07-01' AND EventDate <= '2013-07-31' AND IsRefresh = 0 GROUP BY TraficSourceID, SearchEngineID, AdvEngineID, Src, Dst ORDER BY PageViews DESC LIMIT 10 OFFSET 1000;
+
+0.023724579000003132
+0.002243735999996943
+0.00233093800000006
+SELECT URLHash, EventDate, COUNT(*) AS PageViews FROM 'hits_*.parquet' WHERE CounterID = 62 AND EventDate >= '2013-07-01' AND EventDate <= '2013-07-31' AND IsRefresh = 0 AND TraficSourceID IN (-1, 6) AND RefererHash = 3594120000172545465 GROUP BY URLHash, EventDate ORDER BY PageViews DESC LIMIT 10 OFFSET 100;
+
+0.020371124999996937
+0.002055431999991697
+0.0017906280000090646
+SELECT WindowClientWidth, WindowClientHeight, COUNT(*) AS PageViews FROM 'hits_*.parquet' WHERE CounterID = 62 AND EventDate >= '2013-07-01' AND EventDate <= '2013-07-31' AND IsRefresh = 0 AND DontCountHits = 0 AND URLHash = 2868770270353813622 GROUP BY WindowClientWidth, WindowClientHeight ORDER BY PageViews DESC LIMIT 10 OFFSET 10000;
+
+0.023090860999985807
+0.002084540999987894
+0.0017159349999928963
+SELECT DATE_TRUNC('minute', EventTime) AS M, COUNT(*) AS PageViews FROM 'hits_*.parquet' WHERE CounterID = 62 AND EventDate >= '2013-07-14' AND EventDate <= '2013-07-15' AND IsRefresh = 0 AND DontCountHits = 0 GROUP BY DATE_TRUNC('minute', EventTime) ORDER BY DATE_TRUNC('minute', EventTime) LIMIT 10 OFFSET 1000;
+
+Traceback (most recent call last):
+  File "/home/runner/work/ClickEmBench/ClickEmBench/duckdb/./query.py", line 17, in <module>
+    results = con.execute(query).fetchall()
+duckdb.duckdb.BinderException: Binder Error: No function matches the given name and argument types 'date_trunc(VARCHAR, BIGINT)'. You might need to add explicit type casts.
+	Candidate functions:
+	date_trunc(VARCHAR, TIMESTAMP) -> TIMESTAMP
+	date_trunc(VARCHAR, DATE) -> TIMESTAMP
+	date_trunc(VARCHAR, INTERVAL) -> INTERVAL
+	date_trunc(VARCHAR, TIMESTAMP WITH TIME ZONE) -> TIMESTAMP WITH TIME ZONE
+
+LINE 1: ...esh = 0 AND DontCountHits = 0 GROUP BY DATE_TRUNC('minute', EventTime) ORDER B...
+                                                  ^
