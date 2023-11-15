@@ -21,7 +21,7 @@ echo '
     "data_size": '$(find . -type f -name "*.parquet" -print0 | xargs -0r du -cb | tail -n1 | awk '{print $1}')',
 
     "result": [
-'$(echo $RESULTS)'
+'$(echo $RESULTS | head -c-2)'
 ]
 }
 ' > "results/${PROVIDER}.${MACHINE}.json"
