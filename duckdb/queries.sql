@@ -20,7 +20,7 @@ SELECT UserID, extract(minute FROM (make_timestamp(EventTime))) AS m, SearchPhra
 SELECT UserID FROM 'hits_*.parquet' WHERE UserID = 435090932899640449;
 SELECT COUNT(*) FROM 'hits_*.parquet' WHERE URL::TEXT LIKE '%google%';
 SELECT SearchPhrase, MIN(URL), COUNT(*) AS c FROM 'hits_*.parquet' WHERE URL::TEXT LIKE '%google%' AND SearchPhrase <> '' GROUP BY SearchPhrase ORDER BY c DESC LIMIT 10;
-SELECT SearchPhrase, MIN(URL), MIN(Title), COUNT(*) AS c, COUNT(DISTINCT UserID) FROM 'hits_*.parquet' WHERE Title LIKE '%Google%' AND URL::TEXT NOT LIKE '%.google.%' AND SearchPhrase <> '' GROUP BY SearchPhrase ORDER BY c DESC LIMIT 10;
+SELECT SearchPhrase, MIN(URL), MIN(Title), COUNT(*) AS c, COUNT(DISTINCT UserID) FROM 'hits_*.parquet' WHERE Title::TEXT LIKE '%Google%' AND URL::TEXT NOT LIKE '%.google.%' AND SearchPhrase <> '' GROUP BY SearchPhrase ORDER BY c DESC LIMIT 10;
 SELECT * FROM 'hits_*.parquet' WHERE URL::TEXT LIKE '%google%' ORDER BY EventTime LIMIT 10;
 SELECT SearchPhrase FROM 'hits_*.parquet' WHERE SearchPhrase <> '' ORDER BY EventTime LIMIT 10;
 SELECT SearchPhrase FROM 'hits_*.parquet' WHERE SearchPhrase <> '' ORDER BY SearchPhrase LIMIT 10;
