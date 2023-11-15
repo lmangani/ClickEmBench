@@ -17,7 +17,7 @@ echo '
     "cluster_size": "serverless",
     "comment": "",
 
-    "tags": ["C++", "column-oriented", "ClickHouse derivative", "embedded", "github"],
+    "tags": ["C++", "column-oriented", "embedded", "github"],
 
     "load_time": '0',
     "data_size": '$(find . -type f -name "*.parquet" -print0 | xargs -0r du -cb | tail -n1 | awk '{print $1}')',
