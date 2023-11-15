@@ -13,4 +13,4 @@ seq 0 1 | xargs -P100 -I{} bash -c 'wget --no-verbose --continue https://dataset
 
 ./run.sh 2>&1 | tee log.txt
 
-./convert.sh 2>&1 | convert.txt
+./convert.sh
