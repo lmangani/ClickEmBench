@@ -53,16 +53,11 @@ jobs:
 
   report:
     needs: benchmark
-    if: false
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     - name: Pull latest
       run: git pull --no-edit
-      
-    - name: Setup Pages
-      uses: actions/configure-pages@v3
-      
     - name: Generate Results
       run: |
         ./generate-results.sh
@@ -72,12 +67,16 @@ jobs:
     - uses: EndBug/add-and-commit@v9
       with:
         default_author: github_actions
-        
+
+    - name: Setup Pages
+      if: false
+      uses: actions/configure-pages@v3
     - name: Upload artifact
+      if: false
       uses: actions/upload-pages-artifact@v2
       with:
         path: 'public'
-          
     - name: Deploy to GitHub Pages
+      if: false
       id: deployment
       uses: actions/deploy-pages@v2
