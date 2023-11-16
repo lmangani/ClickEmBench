@@ -1,6 +1,13 @@
 name: Embedded Benchmark
 on:
   workflow_dispatch:
+    inputs:
+      ITERATIONS:
+        description: 'Test iterations, default 3'
+        required: false
+      PARQUETS:
+        description: 'Parquet dataset 1-99, default 1'
+        required: false
 
 permissions:
   contents: write
@@ -33,6 +40,7 @@ jobs:
     - name: Benchmark ${{ matrix.DBNAME }}
       env:
         ITERATIONS: ${{ github.event.inputs.ITERATIONS || 3 }}
+        PARQUETS: ${{ github.event.inputs.PARQUETS || 1 }}
         DBNAME: ${{ matrix.DBNAME }}
       run: |
         cd ${{ matrix.DBNAME }}
